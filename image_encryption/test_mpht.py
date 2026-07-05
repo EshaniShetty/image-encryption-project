@@ -1,4 +1,10 @@
-from image_confusion import *
+from image_confusion import (
+    load_image,
+    display_image,
+    save_image,
+    print_image_info
+)
+
 from chaos import SkewTentMap
 from mpht_shuffle import MPHTShuffle
 
@@ -10,16 +16,16 @@ print_image_info(image)
 
 height, width, channels = image.shape
 
-number_of_pixels = height * width
+total_pixels = height * width
 
 print("\nGenerating Chaos Sequence...")
 
 chaos = SkewTentMap(
-    x0=0.45,
-    p=0.35
+    x0=0.417,
+    p=0.381
 )
 
-sequence = chaos.generate_sequence(number_of_pixels)
+sequence = chaos.generate_sequence(total_pixels)
 
 print("Sequence Generated.")
 
@@ -31,13 +37,19 @@ shuffled_image, permutation = mpht.shuffle(image)
 
 print("Image Successfully Shuffled.")
 
-display_image("Original", image)
+print("\nChecking Pixels")
 
-display_image("MPHT Shuffled", shuffled_image)
+print("Original:", image[0, 0])
+
+print("Shuffled:", shuffled_image[0, 0])
+
+display_image("Original Image", image)
+
+display_image("Shuffled Image", shuffled_image)
 
 save_image(
     "encrypted/shuffled_flower.png",
     shuffled_image
 )
 
-print("\nSaved in encrypted/shuffled_flower.png")
+print("\nSaved Successfully.")
