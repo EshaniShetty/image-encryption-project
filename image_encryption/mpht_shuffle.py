@@ -2,35 +2,77 @@ import numpy as np
 
 
 class MPHTShuffle:
-    """
-    MPHT-style image confusion using a chaotic sequence.
-    """
 
     def __init__(self, chaos_sequence):
         self.chaos_sequence = chaos_sequence
 
     def shuffle(self, image):
 
-        height, width, channels = image.shape
+        h, w, c = image.shape
 
-        # Flatten image
-        pixels = image.reshape(-1, channels)
+        offset = 0
+
+        # ---------- Row Permutation ----------
+        row_perm = np.argsort(
+            self.chaos_sequence[offset:offset + h]
+        )
+        offset += h
+
+        shuffled = image[row_perm, :, :]
+
+        # ---------- Column Permutation ----------
+        col_perm = np.argsort(
+            self.chaos_sequence[offset:offset + w]
+        )
+        offset += w
+
+        shuffled = shuffled[:, col_perm, :]
+
+        # ---------- Pixel Permutation ----------
+        pixels = shuffled.reshape(-1, c)
 
         total_pixels = len(pixels)
 
-        if len(self.chaos_sequence) != total_pixels:
-            raise ValueError("Chaos sequence length mismatch.")
+        pixel_perm = np.argsort(
+            self.chaos_sequence[offset:offset + total_pixels]
+        )
 
-        # Convert chaos values into integer indices
-        indices = np.arange(total_pixels)
+        pixels = pixels[pixel_perm]
 
-        # Multiply by a large number and sort
-        random_order = np.argsort(self.chaos_sequence * 1000000)
+        shuffled = pixels.reshape(h, w, c)
 
-        # Shuffle pixels
-        shuffled_pixels = pixels[random_order]
+        permutation = (
+            row_perm,
+            col_perm,
+            pixel_perm
+        )
 
-        # Reshape back
-        shuffled_image = shuffled_pixels.reshape(height, width, channels)
+        return shuffled, permutation
 
-        return shuffled_image, random_order
+
+    def unshuffle(self, image, permutation):
+
+        row_perm, col_perm, pixel_perm = permutation
+
+        h, w, c = image.shape
+
+        # ---------- Undo Pixel Permutation ----------
+        pixels = image.reshape(-1, c)
+
+        original_pixels = np.zeros_like(pixels)
+
+        original_pixels[pixel_perm] = pixels
+
+        restored = original_pixels.reshape(h, w, c)
+
+        # ---------- Undo Column Permutation ----------
+        inverse_col = np.argsort(col_perm)
+
+        restored = restored[:, inverse_col, :]
+
+        # ---------- Undo Row Permutation ----------
+        inverse_row = np.argsort(row_perm)
+
+        restored = restored[inverse_row, :, :]
+
+        return restored
